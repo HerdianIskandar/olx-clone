@@ -1,27 +1,32 @@
 <?php
 require_once 'config.php';
 
-// Get categories
-$categories_query = "SELECT * FROM categories ORDER BY name";
-$categories_result = $conn->query($categories_query);
+// Get categories using PDO
+try {
+    $categories = getAllCategories($pdo);
+} catch (Exception $e) {
+    error_log("Error fetching categories: " . $e->getMessage());
+    $categories = [];
+}
 
-// Get featured ads (latest 8 ads)
-$featured_query = "SELECT a.*, u.name as user_name, c.name as category_name, 
-                   (SELECT image_path FROM ad_images WHERE ad_id = a.id LIMIT 1) as image
-                   FROM ads a 
-                   JOIN users u ON a.user_id = u.id 
-                   JOIN categories c ON a.category_id = c.id 
-                   ORDER BY a.created_at DESC LIMIT 8";
-$featured_result = $conn->query($featured_query);
+// Get featured ads (latest 8 ads) using PDO
+try {
+    $featured_ads = getFeaturedAds($pdo, 8);
+} catch (Exception $e) {
+    error_log("Error fetching featured ads: " . $e->getMessage());
+    $featured_ads = [];
+}
 
-// Get recent ads (latest 4 ads after featured)
-$recent_query = "SELECT a.*, u.name as user_name, c.name as category_name, 
-                 (SELECT image_path FROM ad_images WHERE ad_id = a.id LIMIT 1) as image
-                 FROM ads a 
-                 JOIN users u ON a.user_id = u.id 
-                 JOIN categories c ON a.category_id = c.id 
-                 ORDER BY a.created_at DESC LIMIT 4, 4";
-$recent_result = $conn->query($recent_query);
+// Get recent ads (latest 4 ads after featured) using PDO
+try {
+    $recent_ads = getRecentAds($pdo, 4);
+} catch (Exception $e) {
+    error_log("Error fetching recent ads: " . $e->getMessage());
+    $recent_ads = [];
+}
+
+// Get current user if logged in
+$current_user = getCurrentUser();
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -597,7 +602,11 @@ $recent_result = $conn->query($recent_query);
                         <a class="nav-link" href="#"><i class="bi bi-heart"></i> Favorit</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#"><i class="bi bi-person-circle"></i> Akun Saya</a>
+                        <?php if ($current_user): ?>
+                            <a class="nav-link" href="#"><i class="bi bi-person-circle"></i> <?php echo htmlspecialchars($current_user['name']); ?></a>
+                        <?php else: ?>
+                            <a class="nav-link" href="login.php"><i class="bi bi-person-circle"></i> Masuk</a>
+                        <?php endif; ?>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="#"><i class="bi bi-globe"></i> ID</a>
@@ -639,8 +648,8 @@ $recent_result = $conn->query($recent_query);
         </div>
         
         <div class="categories-grid">
-            <?php if ($categories_result && $categories_result->num_rows > 0): ?>
-                <?php while ($category = $categories_result->fetch_assoc()): ?>
+            <?php if (!empty($categories)): ?>
+                <?php foreach ($categories as $category): ?>
                     <a href="index.php?category=<?php echo $category['id']; ?>" class="category-card text-decoration-none" data-category-id="<?php echo $category['id']; ?>">
                         <div class="category-icon">
                             <?php if (!empty($category['icon'])): ?>
@@ -651,7 +660,7 @@ $recent_result = $conn->query($recent_query);
                         </div>
                         <h6 class="category-name"><?php echo htmlspecialchars($category['name']); ?></h6>
                     </a>
-                <?php endwhile; ?>
+                <?php endforeach; ?>
             <?php else: ?>
                 <!-- Default categories if no data in database -->
                 <a href="#" class="category-card text-decoration-none">
@@ -707,8 +716,8 @@ $recent_result = $conn->query($recent_query);
         </div>
         
         <div class="ads-grid" id="featured-ads">
-            <?php if ($featured_result && $featured_result->num_rows > 0): ?>
-                <?php while ($ad = $featured_result->fetch_assoc()): ?>
+            <?php if (!empty($featured_ads)): ?>
+                <?php foreach ($featured_ads as $ad): ?>
                     <a href="detail.php?id=<?php echo $ad['id']; ?>" class="ad-card text-decoration-none">
                         <div class="ad-image-container">
                             <?php if (!empty($ad['image'])): ?>
@@ -730,7 +739,7 @@ $recent_result = $conn->query($recent_query);
                             </div>
                         </div>
                     </a>
-                <?php endwhile; ?>
+                <?php endforeach; ?>
             <?php else: ?>
                 <!-- Sample ads if no data in database -->
                 <a href="#" class="ad-card text-decoration-none">
@@ -798,8 +807,8 @@ $recent_result = $conn->query($recent_query);
         </div>
         
         <div class="ads-grid" id="recent-ads">
-            <?php if ($recent_result && $recent_result->num_rows > 0): ?>
-                <?php while ($ad = $recent_result->fetch_assoc()): ?>
+            <?php if (!empty($recent_ads)): ?>
+                <?php foreach ($recent_ads as $ad): ?>
                     <a href="detail.php?id=<?php echo $ad['id']; ?>" class="ad-card text-decoration-none">
                         <div class="ad-image-container">
                             <?php if (!empty($ad['image'])): ?>
@@ -821,7 +830,7 @@ $recent_result = $conn->query($recent_query);
                             </div>
                         </div>
                     </a>
-                <?php endwhile; ?>
+                <?php endforeach; ?>
             <?php else: ?>
                 <!-- Sample recent ads if no data in database -->
                 <a href="#" class="ad-card text-decoration-none">
