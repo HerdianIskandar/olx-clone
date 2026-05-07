@@ -2,16 +2,14 @@
 require_once 'config.php';
 
 // Check if user is already logged in
-session_start();
-if (isset($_SESSION['user_id'])) {
-    header("Location: index.php");
-    exit();
+if (isLoggedIn()) {
+    redirect("index.php");
 }
 
 // Handle registration form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $name = sanitize($conn, $_POST['name']);
-    $email = sanitize($conn, $_POST['email']);
+    $name = sanitize($_POST['name']);
+    $email = sanitize($_POST['email']);
     $password = $_POST['password'];
     $confirm_password = $_POST['confirm_password'];
     
@@ -20,6 +18,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     if (empty($name)) {
         $errors[] = "Nama harus diisi!";
+    } elseif (strlen($name) < 3) {
+        $errors[] = "Nama minimal 3 karakter!";
     }
     
     if (empty($email)) {
@@ -32,42 +32,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors[] = "Password harus diisi!";
     } elseif (strlen($password) < 6) {
         $errors[] = "Password minimal 6 karakter!";
+    } elseif (!preg_match('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/', $password)) {
+        $errors[] = "Password harus mengandung huruf besar, huruf kecil, dan angka!";
     }
     
     if ($password !== $confirm_password) {
         $errors[] = "Password tidak cocok!";
     }
     
-    // Check if email already exists
+    // Check if email already exists using PDO
     if (empty($errors)) {
-        $check_query = "SELECT id FROM users WHERE email = ?";
-        $stmt = $conn->prepare($check_query);
-        $stmt->bind_param("s", $email);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        
-        if ($result->num_rows > 0) {
-            $errors[] = "Email sudah terdaftar!";
+        try {
+            if (recordExists($pdo, 'users', 'email', $email)) {
+                $errors[] = "Email sudah terdaftar!";
+            }
+        } catch (Exception $e) {
+            $errors[] = "Terjadi kesalahan. Silakan coba lagi.";
         }
     }
     
-    // Register user if no errors
+    // Register user if no errors using PDO
     if (empty($errors)) {
-        $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-        $insert_query = "INSERT INTO users (name, email, password) VALUES (?, ?, ?)";
-        $stmt = $conn->prepare($insert_query);
-        $stmt->bind_param("sss", $name, $email, $hashed_password);
-        
-        if ($stmt->execute()) {
-            // Auto login after registration
-            $_SESSION['user_id'] = $conn->insert_id;
-            $_SESSION['user_name'] = $name;
-            $_SESSION['user_email'] = $email;
+        try {
+            $userId = createUser($pdo, $name, $email, $password);
             
-            header("Location: index.php");
-            exit();
-        } else {
-            $errors[] = "Registrasi gagal! Silakan coba lagi.";
+            if ($userId) {
+                // Auto login after registration
+                $_SESSION['user_id'] = $userId;
+                $_SESSION['user_name'] = $name;
+                $_SESSION['user_email'] = $email;
+                
+                // Set success message
+                setFlashMessage('success', 'Registrasi berhasil! Selamat datang di OLX Clone.');
+                
+                redirect("index.php");
+            } else {
+                $errors[] = "Registrasi gagal! Silakan coba lagi.";
+            }
+        } catch (Exception $e) {
+            error_log("Registration Error: " . $e->getMessage());
+            $errors[] = "Terjadi kesalahan sistem. Silakan coba lagi nanti.";
         }
     }
 }
@@ -487,6 +491,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             border-left: 4px solid var(--accent-color);
         }
         
+        .alert-success {
+            background: rgba(40, 167, 69, 0.1);
+            color: #28a745;
+            border-left: 4px solid #28a745;
+        }
+        
         .alert-danger ul {
             margin: 0;
             padding-left: 1.2rem;
@@ -603,6 +613,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <h1 class="register-title">Buat Akun Baru</h1>
                     <p class="register-subtitle">Bergabung dengan jutaan pengguna OLX Clone</p>
                 </div>
+
+                <?php 
+                $successMessage = getFlashMessage('success');
+                if ($successMessage): ?>
+                    <div class="alert alert-success">
+                        <i class="bi bi-check-circle"></i>
+                        <?php echo $successMessage; ?>
+                    </div>
+                <?php endif; ?>
 
                 <?php if (isset($errors) && !empty($errors)): ?>
                     <div class="alert alert-danger">
