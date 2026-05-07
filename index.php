@@ -290,6 +290,10 @@ $recent_result = $conn->query($recent_query);
             color: var(--primary-color);
         }
         
+        .category-card:hover .category-name {
+            color: inherit;
+        }
+        
         .category-name {
             font-weight: 600;
             color: var(--gray-800);
@@ -322,6 +326,13 @@ $recent_result = $conn->query($recent_query);
             transform: translateY(-8px);
             box-shadow: var(--shadow-lg);
             border-color: var(--secondary-color);
+        }
+        
+        .ad-card:hover .ad-title,
+        .ad-card:hover .ad-price,
+        .ad-card:hover .ad-location,
+        .ad-card:hover .ad-meta {
+            color: inherit;
         }
         
         .ad-image-container {
@@ -630,7 +641,7 @@ $recent_result = $conn->query($recent_query);
         <div class="categories-grid">
             <?php if ($categories_result && $categories_result->num_rows > 0): ?>
                 <?php while ($category = $categories_result->fetch_assoc()): ?>
-                    <div class="category-card" data-category-id="<?php echo $category['id']; ?>">
+                    <a href="index.php?category=<?php echo $category['id']; ?>" class="category-card text-decoration-none" data-category-id="<?php echo $category['id']; ?>">
                         <div class="category-icon">
                             <?php if (!empty($category['icon'])): ?>
                                 <i class="<?php echo htmlspecialchars($category['icon']); ?>"></i>
@@ -639,46 +650,46 @@ $recent_result = $conn->query($recent_query);
                             <?php endif; ?>
                         </div>
                         <h6 class="category-name"><?php echo htmlspecialchars($category['name']); ?></h6>
-                    </div>
+                    </a>
                 <?php endwhile; ?>
             <?php else: ?>
                 <!-- Default categories if no data in database -->
-                <div class="category-card">
+                <a href="#" class="category-card text-decoration-none">
                     <div class="category-icon">
                         <i class="bi bi-car-front"></i>
                     </div>
                     <h6 class="category-name">Mobil</h6>
-                </div>
-                <div class="category-card">
+                </a>
+                <a href="#" class="category-card text-decoration-none">
                     <div class="category-icon">
                         <i class="bi bi-bicycle"></i>
                     </div>
                     <h6 class="category-name">Motor</h6>
-                </div>
-                <div class="category-card">
+                </a>
+                <a href="#" class="category-card text-decoration-none">
                     <div class="category-icon">
                         <i class="bi bi-house"></i>
                     </div>
                     <h6 class="category-name">Properti</h6>
-                </div>
-                <div class="category-card">
+                </a>
+                <a href="#" class="category-card text-decoration-none">
                     <div class="category-icon">
                         <i class="bi bi-phone"></i>
                     </div>
                     <h6 class="category-name">Elektronik</h6>
-                </div>
-                <div class="category-card">
+                </a>
+                <a href="#" class="category-card text-decoration-none">
                     <div class="category-icon">
                         <i class="bi bi-laptop"></i>
                     </div>
                     <h6 class="category-name">Komputer</h6>
-                </div>
-                <div class="category-card">
+                </a>
+                <a href="#" class="category-card text-decoration-none">
                     <div class="category-icon">
                         <i class="bi bi-bag"></i>
                     </div>
                     <h6 class="category-name">Fashion</h6>
-                </div>
+                </a>
             <?php endif; ?>
         </div>
     </div>
@@ -698,7 +709,7 @@ $recent_result = $conn->query($recent_query);
         <div class="ads-grid" id="featured-ads">
             <?php if ($featured_result && $featured_result->num_rows > 0): ?>
                 <?php while ($ad = $featured_result->fetch_assoc()): ?>
-                    <div class="ad-card">
+                    <a href="detail.php?id=<?php echo $ad['id']; ?>" class="ad-card text-decoration-none">
                         <div class="ad-image-container">
                             <?php if (!empty($ad['image'])): ?>
                                 <img src="<?php echo htmlspecialchars($ad['image']); ?>" class="ad-image" alt="<?php echo htmlspecialchars($ad['title']); ?>">
@@ -718,11 +729,11 @@ $recent_result = $conn->query($recent_query);
                                 <?php echo timeAgo($ad['created_at']); ?>
                             </div>
                         </div>
-                    </div>
+                    </a>
                 <?php endwhile; ?>
             <?php else: ?>
                 <!-- Sample ads if no data in database -->
-                <div class="ad-card">
+                <a href="#" class="ad-card text-decoration-none">
                     <div class="ad-image-container">
                         <img src="https://placehold.co/300x200" class="ad-image" alt="Product Image">
                         <span class="ad-badge">Populer</span>
@@ -733,8 +744,8 @@ $recent_result = $conn->query($recent_query);
                         <p class="ad-location"><i class="bi bi-geo-alt"></i> Jakarta Selatan</p>
                         <div class="ad-meta">2 hari yang lalu</div>
                     </div>
-                </div>
-                <div class="ad-card">
+                </a>
+                <a href="#" class="ad-card text-decoration-none">
                     <div class="ad-image-container">
                         <img src="https://placehold.co/300x200" class="ad-image" alt="Product Image">
                         <span class="ad-badge">Populer</span>
@@ -745,8 +756,8 @@ $recent_result = $conn->query($recent_query);
                         <p class="ad-location"><i class="bi bi-geo-alt"></i> Bandung</p>
                         <div class="ad-meta">1 minggu yang lalu</div>
                     </div>
-                </div>
-                <div class="ad-card">
+                </a>
+                <a href="#" class="ad-card text-decoration-none">
                     <div class="ad-image-container">
                         <img src="https://placehold.co/300x200" class="ad-image" alt="Product Image">
                         <span class="ad-badge">Populer</span>
@@ -757,8 +768,8 @@ $recent_result = $conn->query($recent_query);
                         <p class="ad-location"><i class="bi bi-geo-alt"></i> Surabaya</p>
                         <div class="ad-meta">3 hari yang lalu</div>
                     </div>
-                </div>
-                <div class="ad-card">
+                </a>
+                <a href="#" class="ad-card text-decoration-none">
                     <div class="ad-image-container">
                         <img src="https://placehold.co/300x200" class="ad-image" alt="Product Image">
                         <span class="ad-badge">Populer</span>
@@ -769,7 +780,7 @@ $recent_result = $conn->query($recent_query);
                         <p class="ad-location"><i class="bi bi-geo-alt"></i> Depok</p>
                         <div class="ad-meta">5 hari yang lalu</div>
                     </div>
-                </div>
+                </a>
             <?php endif; ?>
         </div>
     </div>
@@ -789,7 +800,7 @@ $recent_result = $conn->query($recent_query);
         <div class="ads-grid" id="recent-ads">
             <?php if ($recent_result && $recent_result->num_rows > 0): ?>
                 <?php while ($ad = $recent_result->fetch_assoc()): ?>
-                    <div class="ad-card">
+                    <a href="detail.php?id=<?php echo $ad['id']; ?>" class="ad-card text-decoration-none">
                         <div class="ad-image-container">
                             <?php if (!empty($ad['image'])): ?>
                                 <img src="<?php echo htmlspecialchars($ad['image']); ?>" class="ad-image" alt="<?php echo htmlspecialchars($ad['title']); ?>">
@@ -809,11 +820,11 @@ $recent_result = $conn->query($recent_query);
                                 <?php echo timeAgo($ad['created_at']); ?>
                             </div>
                         </div>
-                    </div>
+                    </a>
                 <?php endwhile; ?>
             <?php else: ?>
                 <!-- Sample recent ads if no data in database -->
-                <div class="ad-card">
+                <a href="#" class="ad-card text-decoration-none">
                     <div class="ad-image-container">
                         <img src="https://placehold.co/300x200" class="ad-image" alt="Product Image">
                         <span class="ad-badge">Baru</span>
@@ -824,8 +835,8 @@ $recent_result = $conn->query($recent_query);
                         <p class="ad-location"><i class="bi bi-geo-alt"></i> Tangerang</p>
                         <div class="ad-meta">Baru saja</div>
                     </div>
-                </div>
-                <div class="ad-card">
+                </a>
+                <a href="#" class="ad-card text-decoration-none">
                     <div class="ad-image-container">
                         <img src="https://placehold.co/300x200" class="ad-image" alt="Product Image">
                         <span class="ad-badge">Baru</span>
@@ -836,8 +847,8 @@ $recent_result = $conn->query($recent_query);
                         <p class="ad-location"><i class="bi bi-geo-alt"></i> Bekasi</p>
                         <div class="ad-meta">1 jam yang lalu</div>
                     </div>
-                </div>
-                <div class="ad-card">
+                </a>
+                <a href="#" class="ad-card text-decoration-none">
                     <div class="ad-image-container">
                         <img src="https://placehold.co/300x200" class="ad-image" alt="Product Image">
                         <span class="ad-badge">Baru</span>
@@ -848,8 +859,8 @@ $recent_result = $conn->query($recent_query);
                         <p class="ad-location"><i class="bi bi-geo-alt"></i> Jakarta Pusat</p>
                         <div class="ad-meta">2 jam yang lalu</div>
                     </div>
-                </div>
-                <div class="ad-card">
+                </a>
+                <a href="#" class="ad-card text-decoration-none">
                     <div class="ad-image-container">
                         <img src="https://placehold.co/300x200" class="ad-image" alt="Product Image">
                         <span class="ad-badge">Baru</span>
@@ -860,7 +871,7 @@ $recent_result = $conn->query($recent_query);
                         <p class="ad-location"><i class="bi bi-geo-alt"></i> Bogor</p>
                         <div class="ad-meta">3 jam yang lalu</div>
                     </div>
-                </div>
+                </a>
             <?php endif; ?>
         </div>
     </div>
