@@ -2,40 +2,57 @@
 require_once 'config.php';
 
 // Check if user is already logged in
-session_start();
-if (isset($_SESSION['user_id'])) {
-    header("Location: index.php");
-    exit();
+if (isLoggedIn()) {
+    redirect("index.php");
 }
 
 // Handle login form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $email = sanitize($conn, $_POST['email']);
+    $email = sanitize($_POST['email']);
     $password = $_POST['password'];
     
-    // Query to check user credentials
-    $query = "SELECT * FROM users WHERE email = ?";
-    $stmt = $conn->prepare($query);
-    $stmt->bind_param("s", $email);
-    $stmt->execute();
-    $result = $stmt->get_result();
+    // Validation
+    $errors = [];
     
-    if ($result->num_rows === 1) {
-        $user = $result->fetch_assoc();
-        if (password_verify($password, $user['password'])) {
-            // Login successful
-            $_SESSION['user_id'] = $user['id'];
-            $_SESSION['user_name'] = $user['name'];
-            $_SESSION['user_email'] = $user['email'];
+    if (empty($email)) {
+        $errors[] = "Email harus diisi!";
+    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $errors[] = "Format email tidak valid!";
+    }
+    
+    if (empty($password)) {
+        $errors[] = "Password harus diisi!";
+    }
+    
+    // Authenticate user if no validation errors
+    if (empty($errors)) {
+        try {
+            // Get user by email using PDO
+            $user = getUserByEmail($pdo, $email);
             
-            // Redirect to dashboard or home
-            header("Location: index.php");
-            exit();
-        } else {
-            $error = "Password salah!";
+            if ($user) {
+                // Verify password using PDO helper function
+                if (verifyPassword($password, $user['password'])) {
+                    // Login successful
+                    $_SESSION['user_id'] = $user['id'];
+                    $_SESSION['user_name'] = $user['name'];
+                    $_SESSION['user_email'] = $user['email'];
+                    
+                    // Set success message
+                    setFlashMessage('success', 'Login berhasil! Selamat datang kembali.');
+                    
+                    // Redirect to home
+                    redirect("index.php");
+                } else {
+                    $errors[] = "Password salah!";
+                }
+            } else {
+                $errors[] = "Email tidak ditemukan!";
+            }
+        } catch (Exception $e) {
+            error_log("Login Error: " . $e->getMessage());
+            $errors[] = "Terjadi kesalahan. Silakan coba lagi.";
         }
-    } else {
-        $error = "Email tidak ditemukan!";
     }
 }
 ?>
@@ -413,6 +430,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             border-left: 4px solid var(--accent-color);
         }
         
+        .alert-success {
+            background: rgba(40, 167, 69, 0.1);
+            color: #28a745;
+            border-left: 4px solid #28a745;
+        }
+        
         /* Footer */
         .footer {
             background-color: var(--primary-color);
@@ -521,9 +544,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <p class="login-subtitle">Masuk ke akun OLX Clone Anda</p>
                 </div>
 
-                <?php if (isset($error)): ?>
+                <?php 
+                $successMessage = getFlashMessage('success');
+                if ($successMessage): ?>
+                    <div class="alert alert-success">
+                        <i class="bi bi-check-circle"></i>
+                        <?php echo $successMessage; ?>
+                    </div>
+                <?php endif; ?>
+
+                <?php if (isset($errors) && !empty($errors)): ?>
                     <div class="alert alert-danger">
-                        <i class="bi bi-exclamation-triangle"></i> <?php echo $error; ?>
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <ul>
+                            <?php foreach ($errors as $error): ?>
+                                <li><?php echo $error; ?></li>
+                            <?php endforeach; ?>
+                        </ul>
                     </div>
                 <?php endif; ?>
 
