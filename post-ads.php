@@ -2,24 +2,41 @@
 require_once 'config.php';
 
 // Check if user is logged in
-session_start();
-if (!isset($_SESSION['user_id'])) {
-    header("Location: login.php");
-    exit();
+if (!isLoggedIn()) {
+    redirect("login.php");
 }
 
-// Get categories for dropdown
-$categories_query = "SELECT * FROM categories ORDER BY name ASC";
-$categories_result = $conn->query($categories_query);
+// Get current user
+$current_user = getCurrentUser();
+if (!$current_user) {
+    redirect("login.php");
+}
+
+// Get categories for dropdown using PDO
+try {
+    $categories = getAllCategories($pdo);
+} catch (Exception $e) {
+    error_log("Error fetching categories: " . $e->getMessage());
+    $categories = [];
+}
+
+// Get existing locations from ads table (unique locations)
+try {
+    $locations_query = "SELECT DISTINCT location FROM ads WHERE location IS NOT NULL AND location != '' ORDER BY location ASC";
+    $locations = fetchAll($pdo, $locations_query);
+} catch (Exception $e) {
+    error_log("Error fetching locations: " . $e->getMessage());
+    $locations = [];
+}
 
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $title = sanitize($conn, $_POST['title']);
-    $description = sanitize($conn, $_POST['description']);
-    $price = sanitize($conn, $_POST['price']);
-    $location = sanitize($conn, $_POST['location']);
+    $title = sanitize($_POST['title']);
+    $description = sanitize($_POST['description']);
+    $price = sanitize($_POST['price']);
+    $location = sanitize($_POST['location']);
     $category_id = (int)$_POST['category_id'];
-    $user_id = $_SESSION['user_id'];
+    $user_id = $current_user['id'];
     
     // Validation
     $errors = [];
@@ -40,49 +57,61 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors[] = "Kategori harus dipilih!";
     }
     
-    // Insert ad if no errors
+    // Insert ad if no errors using PDO
     if (empty($errors)) {
-        $insert_query = "INSERT INTO ads (title, description, price, location, category_id, user_id) VALUES (?, ?, ?, ?, ?, ?)";
-        $stmt = $conn->prepare($insert_query);
-        $stmt->bind_param("ssdsii", $title, $description, $price, $location, $category_id, $user_id);
-        
-        if ($stmt->execute()) {
-            $ad_id = $conn->insert_id;
+        try {
+            // Start transaction for data consistency
+            $pdo->beginTransaction();
             
-            // Handle image uploads
-            if (!empty($_FILES['images']['name'][0])) {
-                $upload_dir = 'uploads/';
-                if (!is_dir($upload_dir)) {
-                    mkdir($upload_dir, 0777, true);
-                }
-                
-                foreach ($_FILES['images']['name'] as $key => $name) {
-                    if ($_FILES['images']['error'][$key] === UPLOAD_ERR_OK) {
-                        $tmp_name = $_FILES['images']['tmp_name'][$key];
-                        $file_extension = strtolower(pathinfo($name, PATHINFO_EXTENSION));
-                        $allowed_extensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
-                        
-                        if (in_array($file_extension, $allowed_extensions)) {
-                            $new_filename = uniqid() . '.' . $file_extension;
-                            $upload_path = $upload_dir . $new_filename;
+            // Create ad using PDO helper function
+            $ad_id = createAd($pdo, $user_id, $category_id, $title, $description, $price, $location);
+            
+            if ($ad_id) {
+                // Handle image uploads using PDO helper function
+                if (!empty($_FILES['images']['name'][0])) {
+                    foreach ($_FILES['images']['name'] as $key => $name) {
+                        if ($_FILES['images']['error'][$key] === UPLOAD_ERR_OK) {
+                            $file_data = [
+                                'name' => $_FILES['images']['name'][$key],
+                                'tmp_name' => $_FILES['images']['tmp_name'][$key],
+                                'error' => $_FILES['images']['error'][$key],
+                                'size' => $_FILES['images']['size'][$key]
+                            ];
                             
-                            if (move_uploaded_file($tmp_name, $upload_path)) {
-                                // Insert image record
-                                $image_query = "INSERT INTO ad_images (ad_id, image_path) VALUES (?, ?)";
-                                $stmt = $conn->prepare($image_query);
-                                $stmt->bind_param("is", $ad_id, $upload_path);
-                                $stmt->execute();
+                            try {
+                                // Upload file using PDO helper function
+                                $image_path = uploadFile($file_data, 'uploads/');
+                                
+                                // Add image to database using PDO helper function
+                                addAdImage($pdo, $ad_id, $image_path);
+                            } catch (Exception $e) {
+                                error_log("Image upload error: " . $e->getMessage());
+                                // Continue with other images, don't fail the entire process
                             }
                         }
                     }
                 }
+                
+                // Commit transaction
+                $pdo->commit();
+                
+                // Set success message
+                setFlashMessage('success', 'Iklan berhasil diposting!');
+                
+                // Redirect to ad detail page
+                redirect("detail.php?id=" . $ad_id);
+            } else {
+                $pdo->rollBack();
+                $errors[] = "Gagal memposting iklan! Silakan coba lagi.";
+            }
+        } catch (Exception $e) {
+            // Rollback transaction on error
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
             }
             
-            // Redirect to success page or ad detail
-            header("Location: detail.php?id=" . $ad_id);
-            exit();
-        } else {
-            $errors[] = "Gagal memposting iklan! Silakan coba lagi.";
+            error_log("Post Ad Error: " . $e->getMessage());
+            $errors[] = "Terjadi kesalahan sistem. Silakan coba lagi nanti.";
         }
     }
 }
@@ -423,6 +452,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             border-left: 4px solid var(--accent-color);
         }
         
+        .alert-success {
+            background: rgba(40, 167, 69, 0.1);
+            color: #28a745;
+            border-left: 4px solid #28a745;
+        }
+        
         .alert-danger ul {
             margin: 0;
             padding-left: 1.2rem;
@@ -534,16 +569,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <p class="post-ads-subtitle">Jual produk Anda dengan mudah dan cepat</p>
         </div>
 
-        <?php if (isset($errors) && !empty($errors)): ?>
-            <div class="alert alert-danger">
-                <i class="bi bi-exclamation-triangle"></i>
-                <ul>
-                    <?php foreach ($errors as $error): ?>
-                        <li><?php echo $error; ?></li>
-                    <?php endforeach; ?>
-                </ul>
-            </div>
-        <?php endif; ?>
+        <?php 
+            $successMessage = getFlashMessage('success');
+            if ($successMessage): ?>
+                <div class="alert alert-success">
+                    <i class="bi bi-check-circle"></i>
+                    <?php echo $successMessage; ?>
+                </div>
+            <?php endif; ?>
+
+            <?php if (isset($errors) && !empty($errors)): ?>
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <ul>
+                        <?php foreach ($errors as $error): ?>
+                            <li><?php echo $error; ?></li>
+                        <?php endforeach; ?>
+                    </ul>
+                </div>
+            <?php endif; ?>
 
         <div class="form-card">
             <form method="POST" action="" enctype="multipart/form-data" id="postAdForm">
@@ -564,12 +608,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <label for="category_id" class="form-label">Kategori *</label>
                         <select class="form-control" id="category_id" name="category_id" required>
                             <option value="">Pilih Kategori</option>
-                            <?php if ($categories_result && $categories_result->num_rows > 0): ?>
-                                <?php while ($category = $categories_result->fetch_assoc()): ?>
+                            <?php if (!empty($categories)): ?>
+                                <?php foreach ($categories as $category): ?>
                                     <option value="<?php echo $category['id']; ?>">
                                         <?php echo htmlspecialchars($category['name']); ?>
                                     </option>
-                                <?php endwhile; ?>
+                                <?php endforeach; ?>
                             <?php endif; ?>
                         </select>
                     </div>
@@ -607,8 +651,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="location" class="form-label">Lokasi</label>
-                                <input type="text" class="form-control" id="location" name="location" 
-                                       placeholder="Jakarta Selatan">
+                                <select class="form-control" id="location_select" name="location_select">
+                                    <option value="">Pilih lokasi yang ada</option>
+                                    <?php if (!empty($locations)): ?>
+                                        <?php foreach ($locations as $loc): ?>
+                                            <option value="<?php echo htmlspecialchars($loc['location']); ?>">
+                                                <?php echo htmlspecialchars($loc['location']); ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    <?php endif; ?>
+                                </select>
+                                <div class="mt-2">
+                                    <button type="button" class="btn btn-outline-primary btn-sm" id="add_new_location_btn">
+                                        <i class="bi bi-plus"></i> Tambah Lokasi Baru
+                                    </button>
+                                </div>
+                                <input type="text" class="form-control mt-2" id="location" name="location" 
+                                       placeholder="Masukkan lokasi baru" style="display: none;">
                             </div>
                         </div>
                     </div>
@@ -799,6 +858,58 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 this.style.borderColor = 'var(--accent-color)';
             } else {
                 this.style.borderColor = '';
+            }
+        });
+        
+        // Location Management
+        const locationSelect = document.getElementById('location_select');
+        const locationInput = document.getElementById('location');
+        const addNewLocationBtn = document.getElementById('add_new_location_btn');
+        
+        // Toggle between dropdown and text input
+        addNewLocationBtn.addEventListener('click', function() {
+            if (locationInput.style.display === 'none') {
+                // Show text input, hide dropdown
+                locationSelect.style.display = 'none';
+                locationInput.style.display = 'block';
+                locationInput.focus();
+                addNewLocationBtn.innerHTML = '<i class="bi bi-list"></i> Pilih Lokasi Ada';
+                addNewLocationBtn.classList.remove('btn-outline-primary');
+                addNewLocationBtn.classList.add('btn-outline-secondary');
+            } else {
+                // Show dropdown, hide text input
+                locationSelect.style.display = 'block';
+                locationInput.style.display = 'none';
+                locationInput.value = '';
+                addNewLocationBtn.innerHTML = '<i class="bi bi-plus"></i> Tambah Lokasi Baru';
+                addNewLocationBtn.classList.remove('btn-outline-secondary');
+                addNewLocationBtn.classList.add('btn-outline-primary');
+            }
+        });
+        
+        // Handle dropdown selection
+        locationSelect.addEventListener('change', function() {
+            if (this.value) {
+                locationInput.value = this.value;
+            }
+        });
+        
+        // Form submission - ensure location value is set
+        document.getElementById('postAdForm').addEventListener('submit', function(e) {
+            const selectedLocation = locationSelect.value;
+            const newLocation = locationInput.value;
+            
+            // If dropdown is visible and has selection, use it
+            if (locationSelect.style.display !== 'none' && selectedLocation) {
+                locationInput.value = selectedLocation;
+            }
+            // If text input is visible, use its value
+            else if (locationInput.style.display !== 'none' && newLocation) {
+                locationInput.value = newLocation;
+            }
+            // If neither has value, set empty
+            else {
+                locationInput.value = '';
             }
         });
     </script>
