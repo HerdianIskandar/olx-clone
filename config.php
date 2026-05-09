@@ -241,10 +241,10 @@ function getRelatedAds($pdo, $categoryId, $currentAdId, $limit = 4) {
 }
 
 // Function to create user
-function createUser($pdo, $name, $email, $password) {
+function createUser($pdo, $name, $email, $password, $whatsapp = null) {
     $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
-    $sql = "INSERT INTO users (name, email, password) VALUES (?, ?, ?)";
-    return insertRecord($pdo, $sql, [$name, $email, $hashedPassword]);
+    $sql = "INSERT INTO users (name, email, whatsapp, password) VALUES (?, ?, ?, ?)";
+    return insertRecord($pdo, $sql, [$name, $email, $whatsapp, $hashedPassword]);
 }
 
 // Function to create ad

@@ -10,6 +10,7 @@ if (isLoggedIn()) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name = sanitize($_POST['name']);
     $email = sanitize($_POST['email']);
+    $whatsapp = sanitize($_POST['whatsapp']);
     $password = $_POST['password'];
     $confirm_password = $_POST['confirm_password'];
     
@@ -26,6 +27,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors[] = "Email harus diisi!";
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $errors[] = "Format email tidak valid!";
+    }
+    
+    if (!empty($whatsapp)) {
+        // Remove any non-numeric characters except +
+        $whatsapp = preg_replace('/[^0-9+]/', '', $whatsapp);
+        // Validate WhatsApp number (basic validation)
+        if (!preg_match('/^\+?[0-9]{10,15}$/', $whatsapp)) {
+            $errors[] = "Format nomor WhatsApp tidak valid!";
+        }
     }
     
     if (empty($password)) {
@@ -54,7 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Register user if no errors using PDO
     if (empty($errors)) {
         try {
-            $userId = createUser($pdo, $name, $email, $password);
+            $userId = createUser($pdo, $name, $email, $password, $whatsapp);
             
             if ($userId) {
                 // Auto login after registration
@@ -656,6 +666,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     <div class="form-row">
                         <div class="form-group">
+                            <label for="whatsapp" class="form-label">Nomor WhatsApp</label>
+                            <div class="input-group">
+                                <i class="bi bi-whatsapp input-icon"></i>
+                                <input type="tel" class="form-control input-with-icon" id="whatsapp" name="whatsapp" 
+                                       placeholder="+628123456789 (opsional)">
+                            </div>
+                            <small class="text-muted">Opsional: Untuk komunikasi lebih lanjut</small>
+                        </div>
+                        <div class="form-group">
                             <label for="password" class="form-label">Password *</label>
                             <div class="input-group">
                                 <i class="bi bi-lock input-icon"></i>
@@ -807,10 +826,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         });
         
+        // WhatsApp validation
+        document.getElementById('whatsapp').addEventListener('input', function() {
+            let value = this.value;
+            // Remove any non-numeric characters except +
+            value = value.replace(/[^0-9+]/g, '');
+            this.value = value;
+            
+            // Basic validation feedback
+            if (value && !/^\+?[0-9]{10,15}$/.test(value)) {
+                this.classList.add('is-invalid');
+            } else {
+                this.classList.remove('is-invalid');
+            }
+        });
+        
         // Form validation
         document.querySelector('form').addEventListener('submit', function(e) {
             const name = document.getElementById('name').value;
             const email = document.getElementById('email').value;
+            const whatsapp = document.getElementById('whatsapp').value;
             const password = document.getElementById('password').value;
             const confirmPassword = document.getElementById('confirm_password').value;
             const terms = document.getElementById('terms').checked;
@@ -818,6 +853,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!name || !email || !password || !confirmPassword) {
                 e.preventDefault();
                 alert('Mohon isi semua field yang diperlukan');
+                return false;
+            }
+            
+            if (whatsapp && !/^\+?[0-9]{10,15}$/.test(whatsapp)) {
+                e.preventDefault();
+                alert('Format nomor WhatsApp tidak valid!');
                 return false;
             }
             
