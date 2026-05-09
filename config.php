@@ -135,6 +135,12 @@ function getAllCategories($pdo) {
     return fetchAll($pdo, $sql);
 }
 
+// Function to get all locations
+function getAllLocations($pdo) {
+    $sql = "SELECT DISTINCT location FROM ads WHERE location IS NOT NULL AND location != '' ORDER BY location ASC";
+    return fetchAll($pdo, $sql);
+}
+
 // Function to get category by ID
 function getCategoryById($pdo, $categoryId) {
     $sql = "SELECT * FROM categories WHERE id = ?";
@@ -152,6 +158,36 @@ function getAdsByCategory($pdo, $categoryId, $limit = 8) {
             ORDER BY a.created_at DESC 
             LIMIT ?";
     return fetchAll($pdo, $sql, [$categoryId, $limit]);
+}
+
+// Function to search ads
+function searchAds($pdo, $searchTerm = '', $location = '', $limit = 12) {
+    $sql = "SELECT a.*, u.name as user_name, c.name as category_name,
+                   (SELECT image_path FROM ad_images WHERE ad_id = a.id LIMIT 1) as image
+            FROM ads a 
+            JOIN users u ON a.user_id = u.id 
+            JOIN categories c ON a.category_id = c.id 
+            WHERE 1=1";
+    
+    $params = [];
+    
+    if (!empty($searchTerm)) {
+        $sql .= " AND (a.title LIKE ? OR a.description LIKE ?)";
+        $searchParam = '%' . $searchTerm . '%';
+        $params[] = $searchParam;
+        $params[] = $searchParam;
+    }
+    
+    if (!empty($location)) {
+        $sql .= " AND a.location LIKE ?";
+        $locationParam = '%' . $location . '%';
+        $params[] = $locationParam;
+    }
+    
+    $sql .= " ORDER BY a.created_at DESC LIMIT ?";
+    $params[] = $limit;
+    
+    return fetchAll($pdo, $sql, $params);
 }
 
 // Function to get featured ads
