@@ -4,6 +4,9 @@ require_once 'config.php';
 // Get ad ID from URL
 $ad_id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 
+// Get current user if logged in
+$current_user = getCurrentUser();
+
 // Get ad details using PDO
 try {
     $ad = getAdById($pdo, $ad_id);
@@ -31,6 +34,11 @@ try {
     error_log("Error fetching related ads: " . $e->getMessage());
     $related_ads = [];
 }
+
+// echo "<pre>";
+// print_r($images);
+// echo "</pre>";
+// die;
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -620,13 +628,17 @@ try {
                         <a class="nav-link" href="index.php"><i class="bi bi-search"></i> Cari</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#"><i class="bi bi-plus-circle"></i> Pasang Iklan</a>
+                        <a class="nav-link" href="post-ads.php"><i class="bi bi-plus-circle"></i> Pasang Iklan</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="#"><i class="bi bi-heart"></i> Favorit</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#"><i class="bi bi-person-circle"></i> Akun Saya</a>
+                        <?php if ($current_user): ?>
+                            <a class="nav-link" href="#"><i class="bi bi-person-circle"></i> <?php echo htmlspecialchars($current_user['name']); ?></a>
+                        <?php else: ?>
+                            <a class="nav-link" href="login.php"><i class="bi bi-person-circle"></i> Masuk</a>
+                        <?php endif; ?>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="#"><i class="bi bi-globe"></i> ID</a>
@@ -654,7 +666,7 @@ try {
             <div class="col-lg-8">
                 <div class="product-detail-container">
                     <div class="image-gallery">
-                        <img id="mainImage" src="<?php echo !empty($ad['image']) ? htmlspecialchars($ad['image']) : 'https://placehold.co/600x500'; ?>" 
+                        <img id="mainImage" src="<?php echo !empty($images[0]['image_path']) ? htmlspecialchars($images[0]['image_path']) : 'https://placehold.co/600x500'; ?>" 
                              alt="<?php echo htmlspecialchars($ad['title']); ?>" class="main-image">
                         
                         <?php if (count($images) > 1): ?>
