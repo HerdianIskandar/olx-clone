@@ -4,41 +4,33 @@ require_once 'config.php';
 // Get ad ID from URL
 $ad_id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 
-// Get ad details
-$ad_query = "SELECT a.*, u.name as user_name, u.email as user_email, c.name as category_name 
-              FROM ads a 
-              JOIN users u ON a.user_id = u.id 
-              JOIN categories c ON a.category_id = c.id 
-              WHERE a.id = ?";
-$stmt = $conn->prepare($ad_query);
-$stmt->bind_param("i", $ad_id);
-$stmt->execute();
-$ad_result = $stmt->get_result();
-
-if ($ad_result->num_rows === 0) {
-    // Redirect to home if ad not found
-    header("Location: index.php");
-    exit();
+// Get ad details using PDO
+try {
+    $ad = getAdById($pdo, $ad_id);
+    
+    if (!$ad) {
+        // Redirect to home if ad not found
+        redirect("index.php");
+    }
+} catch (Exception $e) {
+    error_log("Error fetching ad details: " . $e->getMessage());
+    redirect("index.php");
 }
 
-$ad = $ad_result->fetch_assoc();
-
-// Get ad images
-$images_query = "SELECT * FROM ad_images WHERE ad_id = ? ORDER BY id ASC";
-$stmt = $conn->prepare($images_query);
-$stmt->bind_param("i", $ad_id);
-$stmt->execute();
-$images_result = $stmt->get_result();
-
-// Get related ads (same category, different ad)
-$related_query = "SELECT a.*, (SELECT image_path FROM ad_images WHERE ad_id = a.id LIMIT 1) as image 
-                  FROM ads a 
-                  WHERE a.category_id = ? AND a.id != ? 
-                  ORDER BY a.created_at DESC LIMIT 4";
-$stmt = $conn->prepare($related_query);
-$stmt->bind_param("ii", $ad['category_id'], $ad_id);
-$stmt->execute();
-$related_result = $stmt->get_result();
+// Get ad images using PDO
+try {
+    $images = getAdImages($pdo, $ad_id);
+} catch (Exception $e) {
+    error_log("Error fetching ad images: " . $e->getMessage());
+    $images = [];
+}
+// Get related ads (same category, different ad) using PDO
+try {
+    $related_ads = getRelatedAds($pdo, $ad['category_id'], $ad_id, 4);
+} catch (Exception $e) {
+    error_log("Error fetching related ads: " . $e->getMessage());
+    $related_ads = [];
+}
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -665,14 +657,14 @@ $related_result = $stmt->get_result();
                         <img id="mainImage" src="<?php echo !empty($ad['image']) ? htmlspecialchars($ad['image']) : 'https://placehold.co/600x500'; ?>" 
                              alt="<?php echo htmlspecialchars($ad['title']); ?>" class="main-image">
                         
-                        <?php if ($images_result->num_rows > 1): ?>
+                        <?php if (count($images) > 1): ?>
                             <div class="image-thumbnails">
-                                <?php while ($image = $images_result->fetch_assoc()): ?>
+                                <?php foreach ($images as $image): ?>
                                     <img src="<?php echo htmlspecialchars($image['image_path']); ?>" 
                                          alt="<?php echo htmlspecialchars($ad['title']); ?>" 
                                          class="thumbnail"
                                          onclick="changeMainImage(this.src)">
-                                <?php endwhile; ?>
+                                <?php endforeach; ?>
                             </div>
                         <?php endif; ?>
                     </div>
@@ -753,11 +745,11 @@ $related_result = $stmt->get_result();
         </div>
 
         <!-- Related Products -->
-        <?php if ($related_result->num_rows > 0): ?>
+        <?php if (!empty($related_ads)): ?>
             <div class="related-section">
                 <h2 class="section-title">Produk Terkait</h2>
                 <div class="related-grid">
-                    <?php while ($related_ad = $related_result->fetch_assoc()): ?>
+                    <?php foreach ($related_ads as $related_ad): ?>
                         <a href="detail.php?id=<?php echo $related_ad['id']; ?>" class="related-card">
                             <img src="<?php echo !empty($related_ad['image']) ? htmlspecialchars($related_ad['image']) : 'https://placehold.co/300x200'; ?>" 
                                  alt="<?php echo htmlspecialchars($related_ad['title']); ?>" class="related-image">
@@ -770,7 +762,7 @@ $related_result = $stmt->get_result();
                                 </div>
                             </div>
                         </a>
-                    <?php endwhile; ?>
+                    <?php endforeach; ?>
                 </div>
             </div>
         <?php endif; ?>
