@@ -556,6 +556,13 @@ if (isset($_POST['price_clean'])) {
                         <a class="nav-link active" href="post-ads.php"><i class="bi bi-plus-circle"></i> Pasang Iklan</a>
                     </li>
                     <li class="nav-item">
+                        <?php if ($current_user): ?>
+                            <a class="nav-link" href="my-ads.php"><i class="bi bi-collection"></i> Iklan Saya</a>
+                        <?php else: ?>
+                            <a class="nav-link" href="login.php?redirect=<?php echo urlencode('my-ads.php'); ?>"><i class="bi bi-collection"></i> Iklan Saya</a>
+                        <?php endif; ?>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link" href="#"><i class="bi bi-heart"></i> Favorit</a>
                     </li>
                     <li class="nav-item">

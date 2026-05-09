@@ -240,6 +240,18 @@ function getRelatedAds($pdo, $categoryId, $currentAdId, $limit = 4) {
     return fetchAll($pdo, $sql, [$categoryId, $currentAdId, $limit]);
 }
 
+// Function to get user's ads
+function getUserAds($pdo, $userId, $limit = 50) {
+    $sql = "SELECT a.*, c.name as category_name,
+                   (SELECT image_path FROM ad_images WHERE ad_id = a.id LIMIT 1) as image
+            FROM ads a 
+            JOIN categories c ON a.category_id = c.id 
+            WHERE a.user_id = ? 
+            ORDER BY a.created_at DESC 
+            LIMIT ?";
+    return fetchAll($pdo, $sql, [$userId, $limit]);
+}
+
 // Function to create user
 function createUser($pdo, $name, $email, $password, $whatsapp = null) {
     $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
@@ -252,6 +264,28 @@ function createAd($pdo, $userId, $categoryId, $title, $description, $price, $loc
     $sql = "INSERT INTO ads (user_id, category_id, title, description, price, location) 
             VALUES (?, ?, ?, ?, ?, ?)";
     return insertRecord($pdo, $sql, [$userId, $categoryId, $title, $description, $price, $location]);
+}
+
+// Function to delete ad
+function deleteAd($pdo, $adId, $userId) {
+    try {
+        $pdo->beginTransaction();
+        
+        // Delete ad images first
+        $sql = "DELETE FROM ad_images WHERE ad_id = ?";
+        executeQuery($pdo, $sql, [$adId]);
+        
+        // Delete the ad
+        $sql = "DELETE FROM ads WHERE id = ? AND user_id = ?";
+        executeQuery($pdo, $sql, [$adId, $userId]);
+        
+        $pdo->commit();
+        return true;
+    } catch (Exception $e) {
+        $pdo->rollBack();
+        error_log("Error deleting ad: " . $e->getMessage());
+        return false;
+    }
 }
 
 // Function to add ad image

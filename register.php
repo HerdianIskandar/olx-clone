@@ -598,7 +598,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <a class="nav-link" href="index.php"><i class="bi bi-search"></i> Cari</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#"><i class="bi bi-plus-circle"></i> Pasang Iklan</a>
+                        <a class="nav-link" href="post-ads.php"><i class="bi bi-plus-circle"></i> Pasang Iklan</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="my-ads.php"><i class="bi bi-collection"></i> Iklan Saya</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="#"><i class="bi bi-heart"></i> Favorit</a>
