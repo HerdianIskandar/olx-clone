@@ -519,7 +519,7 @@ try {
                                     <a href="detail.php?id=<?php echo $ad['id']; ?>" class="btn-action btn-edit">
                                         <i class="bi bi-eye"></i> Lihat
                                     </a>
-                                    <a href="edit-ad.php?id=<?php echo $ad['id']; ?>" class="btn-action btn-edit">
+                                    <a href="edit-ads.php?id=<?php echo $ad['id']; ?>" class="btn-action btn-edit">
                                         <i class="bi bi-pencil"></i> Edit
                                     </a>
                                     <a href="my-ads.php?action=delete&id=<?php echo $ad['id']; ?>" 

@@ -266,6 +266,13 @@ function createAd($pdo, $userId, $categoryId, $title, $description, $price, $loc
     return insertRecord($pdo, $sql, [$userId, $categoryId, $title, $description, $price, $location]);
 }
 
+// Function to update ad
+function updateAd($pdo, $adId, $userId, $categoryId, $title, $description, $price, $location) {
+    $sql = "UPDATE ads SET category_id = ?, title = ?, description = ?, price = ?, location = ? 
+            WHERE id = ? AND user_id = ?";
+    return executeQuery($pdo, $sql, [$categoryId, $title, $description, $price, $location, $adId, $userId]);
+}
+
 // Function to delete ad
 function deleteAd($pdo, $adId, $userId) {
     try {
