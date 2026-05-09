@@ -20,6 +20,14 @@ try {
     redirect("index.php");
 }
 
+// Get seller information using PDO
+try {
+    $seller = getUserById($pdo, $ad['user_id']);
+} catch (Exception $e) {
+    error_log("Error fetching seller info: " . $e->getMessage());
+    $seller = null;
+}
+
 // Get ad images using PDO
 try {
     $images = getAdImages($pdo, $ad_id);
@@ -772,13 +780,30 @@ try {
                     <span class="seller-badge">Penjual Terpercaya</span>
                     
                     <div class="contact-buttons">
-                        <a href="https://wa.me/6281234567890?text=Halo,%20saya%20tertarik%20dengan%20produk%20anda:%20<?php echo urlencode($ad['title']); ?>" 
-                           class="btn-contact btn-whatsapp" target="_blank">
-                            <i class="bi bi-whatsapp"></i> WhatsApp
-                        </a>
-                        <a href="tel:+6281234567890" class="btn-contact btn-phone">
-                            <i class="bi bi-telephone"></i> Telepon
-                        </a>
+                        <?php if ($current_user): ?>
+                            <?php if (!empty($seller['whatsapp'])): ?>
+                                <a href="https://wa.me/<?php echo preg_replace('/[^0-9]/', '', $seller['whatsapp']); ?>?text=Halo,%20saya%20tertarik%20dengan%20produk%20anda:%20<?php echo urlencode($ad['title']); ?>" 
+                                       class="btn-contact btn-whatsapp" target="_blank">
+                                    <i class="bi bi-whatsapp"></i> WhatsApp
+                                </a>
+                            <?php else: ?>
+                                <a href="https://wa.me/6281234567890?text=Halo,%20saya%20tertarik%20dengan%20produk%20anda:%20<?php echo urlencode($ad['title']); ?>" 
+                                       class="btn-contact btn-whatsapp" target="_blank">
+                                    <i class="bi bi-whatsapp"></i> WhatsApp
+                                </a>
+                            <?php endif; ?>
+                             
+                            <a href="tel:<?php echo !empty($seller['whatsapp']) ? '6281234567890' : preg_replace('/[^0-9]/', '', $seller['whatsapp']); ?>" class="btn-contact btn-phone">
+                                <i class="bi bi-telephone"></i> Telepon
+                            </a>
+                        <?php else: ?>
+                            <a href="login.php?redirect=<?php echo urlencode('detail.php?id=' . $ad_id); ?>" class="btn-contact btn-whatsapp">
+                                <i class="bi bi-whatsapp"></i> WhatsApp (Login Dulu)
+                            </a>
+                            <a href="login.php?redirect=<?php echo urlencode('detail.php?id=' . $ad_id); ?>" class="btn-contact btn-phone">
+                                <i class="bi bi-telephone"></i> Telepon (Login Dulu)
+                            </a>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>

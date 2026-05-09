@@ -3,7 +3,9 @@ require_once 'config.php';
 
 // Check if user is already logged in
 if (isLoggedIn()) {
-    redirect("index.php");
+    // If there's a redirect parameter, go there instead of index.php
+    $redirect_url = isset($_GET['redirect']) ? sanitize($_GET['redirect']) : 'index.php';
+    redirect($redirect_url);
 }
 
 // Handle login form submission
@@ -41,8 +43,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     // Set success message
                     setFlashMessage('success', 'Login berhasil! Selamat datang kembali.');
                     
-                    // Redirect to home
-                    redirect("index.php");
+                    // Redirect to original page or home
+                    $redirect_url = isset($_POST['redirect']) ? sanitize($_POST['redirect']) : 'index.php';
+                    redirect($redirect_url);
                 } else {
                     $errors[] = "Password salah!";
                 }
@@ -565,6 +568,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <?php endif; ?>
 
                 <form method="POST" action="">
+                    <?php if (isset($_GET['redirect'])): ?>
+                        <input type="hidden" name="redirect" value="<?php echo htmlspecialchars($_GET['redirect']); ?>">
+                    <?php endif; ?>
                     <div class="form-group">
                         <label for="email" class="form-label">Email</label>
                         <div class="input-group">
