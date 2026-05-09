@@ -33,7 +33,14 @@ try {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $title = sanitize($_POST['title']);
     $description = sanitize($_POST['description']);
+    // Handle price - use clean value from hidden input or format the visible input
+if (isset($_POST['price_clean'])) {
+    $price = sanitize($_POST['price_clean']);
+} else {
+    // Fallback: remove formatting from visible input
     $price = sanitize($_POST['price']);
+    $price = preg_replace('/\D/', '', $price); // Remove all non-digit characters
+}
     $location = sanitize($_POST['location']);
     $category_id = (int)$_POST['category_id'];
     $user_id = $current_user['id'];
@@ -644,8 +651,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="price" class="form-label">Harga (Rp) *</label>
-                                <input type="number" class="form-control" id="price" name="price" 
-                                       placeholder="15000000" min="0" required>
+                                <div class="input-group">
+                                    <span class="input-group-text">Rp</span>
+                                    <input type="text" class="form-control" id="price" name="price" 
+                                           placeholder="15.000.000" required>
+                                </div>
+                                <small class="form-text text-muted">Masukkan harga tanpa format, contoh: 15000000</small>
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -780,7 +791,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     reader.readAsDataURL(file);
                 }
             });
-        }
+        }        
         
         function addImagePreview(id, url) {
             const previewItem = document.createElement('div');
@@ -813,8 +824,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         document.getElementById('postAdForm').addEventListener('submit', function(e) {
             const title = document.getElementById('title').value;
             const description = document.getElementById('description').value;
-            const price = document.getElementById('price').value;
+            const priceInput = document.getElementById('price');
             const categoryId = document.getElementById('category_id').value;
+            
+            // Get clean price value from data attribute
+            const price = priceInput.getAttribute('data-raw-value') || 
+                         priceInput.value.replace(/\D/g, '');
             
             if (!title || !description || !price || !categoryId) {
                 e.preventDefault();
@@ -841,10 +856,65 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         });
         
-        // Price formatting
-        document.getElementById('price').addEventListener('input', function() {
-            if (this.value < 0) {
-                this.value = 0;
+        // Price formatting with currency format
+        const priceInput = document.getElementById('price');
+        
+        function formatCurrency(value) {
+            // Remove all non-digit characters
+            let cleanValue = value.replace(/\D/g, '');
+            
+            // Convert to number and format with thousand separator
+            if (cleanValue === '') {
+                return '';
+            }
+            
+            // Add thousand separator (dot for Indonesian format)
+            let formatted = cleanValue.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+            
+            return formatted;
+        }
+        
+        function unformatCurrency(formattedValue) {
+            // Remove all non-digit characters to get clean number
+            return formattedValue.replace(/\D/g, '');
+        }
+        
+        priceInput.addEventListener('input', function(e) {
+            let value = e.target.value;
+            
+            // Format the value while typing
+            let formatted = formatCurrency(value);
+            
+            // Update the input value
+            e.target.value = formatted;
+            
+            // Store the clean value in a data attribute for form submission
+            e.target.setAttribute('data-raw-value', unformatCurrency(formatted));
+        });
+        
+        priceInput.addEventListener('blur', function(e) {
+            // Ensure proper formatting when leaving the field
+            let value = e.target.value;
+            let formatted = formatCurrency(value);
+            e.target.value = formatted;
+            e.target.setAttribute('data-raw-value', unformatCurrency(formatted));
+        });
+        
+        // Prevent negative values
+        priceInput.addEventListener('keydown', function(e) {
+            // Allow backspace, delete, tab, escape, enter
+            if ([8, 9, 27, 13].indexOf(e.keyCode) !== -1 ||
+                // Allow: Ctrl+A, Command+A
+                (e.keyCode === 65 && (e.ctrlKey === true || e.metaKey === true)) ||
+                // Allow: home, end, left, right, down, up
+                (e.keyCode >= 35 && e.keyCode <= 40)) {
+                // let it happen, don't do anything
+                return;
+            }
+            
+            // Ensure that it is a number and stop the keypress
+            if ((e.shiftKey || (e.keyCode < 48 || e.keyCode > 57)) && (e.keyCode < 96 || e.keyCode > 105)) {
+                e.preventDefault();
             }
         });
         
@@ -894,22 +964,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         });
         
-        // Form submission - ensure location value is set
+        // Form submission - ensure location value is set and handle price formatting
         document.getElementById('postAdForm').addEventListener('submit', function(e) {
             const selectedLocation = locationSelect.value;
             const newLocation = locationInput.value;
             
-            // If dropdown is visible and has selection, use it
+            // Handle location value
             if (locationSelect.style.display !== 'none' && selectedLocation) {
                 locationInput.value = selectedLocation;
             }
-            // If text input is visible, use its value
             else if (locationInput.style.display !== 'none' && newLocation) {
                 locationInput.value = newLocation;
             }
-            // If neither has value, set empty
             else {
                 locationInput.value = '';
+            }
+            
+            // Handle price formatting - convert formatted price to clean number
+            const priceRawValue = priceInput.getAttribute('data-raw-value');
+            if (priceRawValue) {
+                // Create a hidden input with the clean price value
+                let hiddenPriceInput = document.createElement('input');
+                hiddenPriceInput.type = 'hidden';
+                hiddenPriceInput.name = 'price_clean';
+                hiddenPriceInput.value = priceRawValue;
+                this.appendChild(hiddenPriceInput);
+                
+                // Update the visible input to show formatted value
+                priceInput.value = formatCurrency(priceRawValue);
             }
         });
     </script>
