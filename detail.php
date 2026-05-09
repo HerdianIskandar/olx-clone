@@ -402,6 +402,20 @@ try {
             margin-bottom: 1.5rem;
         }
         
+        .read-more-btn {
+            color: var(--secondary-color);
+            font-weight: 600;
+            padding: 0;
+            margin-top: 0.5rem;
+            text-decoration: none;
+            transition: var(--transition);
+        }
+        
+        .read-more-btn:hover {
+            color: var(--primary-color);
+            text-decoration: underline;
+        }
+        
         .details-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -685,8 +699,22 @@ try {
                 <!-- Product Details -->
                 <div class="details-section">
                     <h2 class="section-title">Deskripsi Produk</h2>
-                    <div class="description-text">
-                        <?php echo !empty($ad['description']) ? nl2br(htmlspecialchars($ad['description'])) : 'Tidak ada deskripsi tersedia.'; ?>
+                    <div class="description-text" id="productDescription">
+                        <?php 
+                        if (!empty($ad['description'])) {
+                            $description = htmlspecialchars($ad['description']);
+                            $short_description = substr($description, 0, 200);
+                            if (strlen($description) > 200) {
+                                echo '<span id="shortDesc">' . nl2br($short_description) . '...</span>';
+                                echo '<span id="fullDesc" style="display: none;">' . nl2br($description) . '</span>';
+                                echo '<button type="button" class="btn btn-link read-more-btn" id="readMoreBtn">Lihat Selengkapnya</button>';
+                            } else {
+                                echo nl2br($description);
+                            }
+                        } else {
+                            echo 'Tidak ada deskripsi tersedia.';
+                        }
+                        ?>
                     </div>
                     
                     <h3 class="section-title">Detail Produk</h3>
@@ -862,11 +890,38 @@ try {
             });
         }
         
+        // Read more/less functionality
+        function toggleDescription() {
+            const shortDesc = document.getElementById('shortDesc');
+            const fullDesc = document.getElementById('fullDesc');
+            const readMoreBtn = document.getElementById('readMoreBtn');
+            
+            if (shortDesc && fullDesc && readMoreBtn) {
+                if (fullDesc.style.display === 'none') {
+                    // Show full description
+                    shortDesc.style.display = 'none';
+                    fullDesc.style.display = 'inline';
+                    readMoreBtn.textContent = 'Lihat Lebih Sedikit';
+                } else {
+                    // Show short description
+                    shortDesc.style.display = 'inline';
+                    fullDesc.style.display = 'none';
+                    readMoreBtn.textContent = 'Lihat Selengkapnya';
+                }
+            }
+        }
+        
         // Set first thumbnail as active on page load
         document.addEventListener('DOMContentLoaded', function() {
             const firstThumbnail = document.querySelector('.thumbnail');
             if (firstThumbnail) {
                 firstThumbnail.classList.add('active');
+            }
+            
+            // Add click event to read more button
+            const readMoreBtn = document.getElementById('readMoreBtn');
+            if (readMoreBtn) {
+                readMoreBtn.addEventListener('click', toggleDescription);
             }
         });
     </script>
