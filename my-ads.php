@@ -446,7 +446,17 @@ try {
                         <a class="nav-link" href="#"><i class="bi bi-heart"></i> Favorit</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#"><i class="bi bi-person-circle"></i> <?php echo htmlspecialchars($current_user['name']); ?></a>
+                        <div class="dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                <i class="bi bi-person-circle"></i> <?php echo htmlspecialchars($current_user['name']); ?>
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="my-ads.php"><i class="bi bi-collection"></i> Iklan Saya</a></li>
+                                <li><a class="dropdown-item" href="#"><i class="bi bi-heart"></i> Favorit</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="logout.php"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
+                            </ul>
+                        </div>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="#"><i class="bi bi-globe"></i> ID</a>
