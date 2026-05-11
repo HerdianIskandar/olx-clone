@@ -174,6 +174,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="stylesheet" href="css/edit-ads.css">
 </head>
 <body>
+    <!-- Navbar -->
     <?php include 'navbar.php'; ?>
 
     <!-- Page Header -->

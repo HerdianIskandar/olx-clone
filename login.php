@@ -73,6 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="stylesheet" href="css/login.css">
 </head>
 <body>
+    <!-- Navbar -->
     <?php include 'navbar.php'; ?>
 
     <!-- Login Container -->
