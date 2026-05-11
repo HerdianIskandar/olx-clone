@@ -726,7 +726,10 @@ if ($category_id > 0) {
         
         <div class="categories-grid">
             <?php if (!empty($categories)): ?>
-                <?php foreach ($categories as $category): ?>
+                <?php 
+                // Limit display to first 6 categories
+                $limited_categories = array_slice($categories, 0, 6);
+                foreach ($limited_categories as $category): ?>
                     <a href="index.php?category=<?php echo $category['id']; ?>" class="category-card text-decoration-none" data-category-id="<?php echo $category['id']; ?>">
                         <div class="category-icon">
                             <?php if (!empty($category['icon'])): ?>

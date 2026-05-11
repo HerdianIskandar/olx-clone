@@ -131,7 +131,7 @@ function getUserByEmail($pdo, $email) {
 
 // Function to get all categories
 function getAllCategories($pdo) {
-    $sql = "SELECT * FROM categories ORDER BY name ASC";
+    $sql = "SELECT * FROM categories";
     return fetchAll($pdo, $sql);
 }
 
