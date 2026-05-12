@@ -129,7 +129,7 @@ if ($category_id > 0) {
         <div class="section-header">
             <div>
                 <h2 class="section-title">Kategori Populer</h2>
-                <p class="section-subtitle">Jelajahi berbagai kategori produk favorit</p>
+                <p class="section-subtitle">Jelajahi berbagai kategori produk populer</p>
             </div>
             <a href="#" class="view-all-btn">
                 Lihat Semua <i class="bi bi-arrow-right"></i>

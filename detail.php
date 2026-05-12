@@ -155,9 +155,6 @@ try {
                         <a href="#" class="btn-action btn-primary-action">
                             <i class="bi bi-chat-dots"></i> Chat Penjual
                         </a>
-                        <a href="#" class="btn-action btn-secondary-action">
-                            <i class="bi bi-heart"></i> Simpan
-                        </a>
                     </div>
                 </div>
 

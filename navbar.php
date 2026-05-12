@@ -27,7 +27,6 @@ $current_user = getCurrentUser();
                                 <li><a class="dropdown-item" href="edit-profile.php"><i class="bi bi-person-gear"></i> Edit Profil</a></li>
                                 <li><a class="dropdown-item" href="post-ads.php"><i class="bi bi-plus-circle"></i> Pasang Iklan</a></li>
                                 <li><a class="dropdown-item" href="my-ads.php"><i class="bi bi-collection"></i> Iklan Saya</a></li>
-                                <li><a class="dropdown-item" href="#"><i class="bi bi-heart"></i> Favorit</a></li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item" href="logout.php"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
                             </ul>
@@ -40,7 +39,6 @@ $current_user = getCurrentUser();
                             <ul class="dropdown-menu">
                                 <li><a class="dropdown-item" href="login.php?redirect=<?php echo urlencode('post-ads.php'); ?>"><i class="bi bi-plus-circle"></i> Pasang Iklan</a></li>
                                 <li><a class="dropdown-item" href="login.php?redirect=<?php echo urlencode('my-ads.php'); ?>"><i class="bi bi-collection"></i> Iklan Saya</a></li>
-                                <li><a class="dropdown-item" href="login.php?redirect=<?php echo urlencode('favorites.php'); ?>"><i class="bi bi-heart"></i> Favorit</a></li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item" href="login.php"><i class="bi bi-box-arrow-in-right"></i> Masuk</a></li>
                                 <li><a class="dropdown-item" href="register.php"><i class="bi bi-person-plus"></i> Daftar</a></li>
