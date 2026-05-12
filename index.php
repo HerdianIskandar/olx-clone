@@ -505,7 +505,7 @@ if ($category_id > 0) {
             const floatingBtn = document.querySelector('.floating-btn');
             floatingBtn.addEventListener('click', function() {
                 // Redirect to post ad page
-                window.location.href = 'post-ad.php';
+                window.location.href = 'post-ads.php';
             });
 
             // Load more functionality

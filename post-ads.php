@@ -284,19 +284,7 @@ if (isset($_POST['price_clean'])) {
         </div>
     </div>
 
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="container">
-            <div class="footer-links">
-                <a href="#">Tentang Kami</a>
-                <a href="#">Bantuan</a>
-                <a href="#">Kebijakan Privasi</a>
-                <a href="#">Syarat & Ketentuan</a>
-                <a href="#">Kontak</a>
-            </div>
-            <p class="mb-0">&copy; 2024 OLX Clone. Hak Cipta Dilindungi.</p>
-        </div>
-    </footer>
+    <?php include 'footer.php'; ?>
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
