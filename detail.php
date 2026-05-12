@@ -168,21 +168,28 @@ try {
                     
                     <div class="contact-buttons">
                         <?php if ($current_user): ?>
-                            <?php if (!empty($seller['whatsapp'])): ?>
-                                <a href="https://wa.me/<?php echo preg_replace('/[^0-9]/', '', $seller['whatsapp']); ?>?text=Halo,%20saya%20tertarik%20dengan%20produk%20anda:%20<?php echo urlencode($ad['title']); ?>" 
-                                       class="btn-contact btn-whatsapp" target="_blank">
-                                    <i class="bi bi-whatsapp"></i> WhatsApp
+                            <?php if ($current_user['id'] != $ad['user_id']): ?>
+                                <?php if (!empty($seller['whatsapp'])): ?>
+                                    <a href="https://wa.me/<?php echo preg_replace('/[^0-9]/', '', $seller['whatsapp']); ?>?text=Halo,%20saya%20tertarik%20dengan%20produk%20anda:%20<?php echo urlencode($ad['title']); ?>" 
+                                           class="btn-contact btn-whatsapp" target="_blank">
+                                        <i class="bi bi-whatsapp"></i> WhatsApp
+                                    </a>
+                                <?php else: ?>
+                                    <a href="https://wa.me/6281234567890?text=Halo,%20saya%20tertarik%20dengan%20produk%20anda:%20<?php echo urlencode($ad['title']); ?>" 
+                                           class="btn-contact btn-whatsapp" target="_blank">
+                                        <i class="bi bi-whatsapp"></i> WhatsApp
+                                    </a>
+                                <?php endif; ?>
+                                 
+                                <a href="tel:<?php echo !empty($seller['whatsapp']) ? '6281234567890' : preg_replace('/[^0-9]/', '', $seller['whatsapp']); ?>" class="btn-contact btn-phone">
+                                    <i class="bi bi-telephone"></i> Telepon
                                 </a>
                             <?php else: ?>
-                                <a href="https://wa.me/6281234567890?text=Halo,%20saya%20tertarik%20dengan%20produk%20anda:%20<?php echo urlencode($ad['title']); ?>" 
-                                       class="btn-contact btn-whatsapp" target="_blank">
-                                    <i class="bi bi-whatsapp"></i> WhatsApp
-                                </a>
+                                <div class="owner-notice">
+                                    <i class="bi bi-info-circle"></i>
+                                    <span>Ini adalah iklan Anda</span>
+                                </div>
                             <?php endif; ?>
-                             
-                            <a href="tel:<?php echo !empty($seller['whatsapp']) ? '6281234567890' : preg_replace('/[^0-9]/', '', $seller['whatsapp']); ?>" class="btn-contact btn-phone">
-                                <i class="bi bi-telephone"></i> Telepon
-                            </a>
                         <?php else: ?>
                             <a href="login.php?redirect=<?php echo urlencode('detail.php?id=' . $ad_id); ?>" class="btn-contact btn-whatsapp">
                                 <i class="bi bi-whatsapp"></i> WhatsApp (Login Dulu)

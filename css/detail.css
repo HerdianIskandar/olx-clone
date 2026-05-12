@@ -323,6 +323,23 @@ h1, h2, h3, h4, h5, h6 {
     text-decoration: none;
 }
 
+.owner-notice {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem;
+    background: var(--gray-100);
+    border-radius: var(--border-radius);
+    color: var(--gray-600);
+    font-size: 0.95rem;
+    border: 1px solid var(--gray-200);
+}
+
+.owner-notice i {
+    color: var(--secondary-color);
+    font-size: 1.1rem;
+}
+
 /* Product Details */
 .details-section {
     background: var(--white);
