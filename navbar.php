@@ -24,6 +24,7 @@ $current_user = getCurrentUser();
                                 <i class="bi bi-person-circle"></i> <?php echo htmlspecialchars($current_user['name']); ?>
                             </a>
                             <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="edit-profile.php"><i class="bi bi-person-gear"></i> Edit Profil</a></li>
                                 <li><a class="dropdown-item" href="post-ads.php"><i class="bi bi-plus-circle"></i> Pasang Iklan</a></li>
                                 <li><a class="dropdown-item" href="my-ads.php"><i class="bi bi-collection"></i> Iklan Saya</a></li>
                                 <li><a class="dropdown-item" href="#"><i class="bi bi-heart"></i> Favorit</a></li>

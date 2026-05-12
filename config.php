@@ -119,7 +119,7 @@ function recordExists($pdo, $table, $column, $value) {
 
 // Function to get user by ID
 function getUserById($pdo, $userId) {
-    $sql = "SELECT id, name, email, whatsapp, created_at FROM users WHERE id = ?";
+    $sql = "SELECT * FROM users WHERE id = ?";
     return fetchOne($pdo, $sql, [$userId]);
 }
 
